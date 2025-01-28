@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شارك تاريخك</title>
+    <script src="https://aka.ms/csspeech/jsbrowserpackageraw"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .iphone-frame {
+            width: 390px;
+            height: 844px;
+            background-color: white;
+            border-radius: 55px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 160px;
+            height: 34px;
+            background-color: #000;
+            border-bottom-left-radius: 18px;
+            border-bottom-right-radius: 18px;
+            z-index: 1000;
+        }
+        .content {
+            height: 100%;
+            overflow-y: auto;
+            padding: 60px 20px 20px;
+            box-sizing: border-box;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4C2A21;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #3a2019;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .live-text {
+            background-color: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 4px;
+            padding: 5px;
+            margin-top: 5px;
+            min-height: 20px;
+        }
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        .button-group button {
+            width: 48%;
+        }
+    </style>
+</head>
+<body>
+    <div class="iphone-frame">
+        <div class="notch"></div>
+        <div class="content">
+            <h1>شارك تاريخك</h1>
+            <form id="eventForm">
+                <div id="live-text" class="live-text"></div>
+                <div class="button-group">
+                    <button type="button" id="recordButton" onclick="toggleRecognition()">بدء التسجيل</button>
+                    <button type="button" id="uploadButton" onclick="uploadAudio()">رفع تسجيل</button>
+                </div>
+
+                <label for="title">العنوان:</label>
+                <input type="text" id="title" name="title" readonly>
+
+                <label for="date">التاريخ:</label>
+                <input type="text" id="date" name="date" readonly>
+
+                <label for="location">الموقع:</label>
+                <input type="text" id="location" name="location" readonly>
+
+                <label for="story">القصة:</label>
+                <textarea id="story" name="story" rows="4" readonly></textarea>
+
+                <label for="references">المرجع (إن وجد):</label>
+                <textarea id="references" name="references" rows="2" readonly></textarea>
+
+                <button type="button" id="processButton" onclick="processText()" disabled>معالجة النص</button>
+                <button type="button" id="saveButton" onclick="saveToFile()" disabled>رفع</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        var recognizer;
+        var isRecognizing = false;
+        var fullText = "";
+
+        function toggleRecognition() {
+            if (isRecognizing) {
+                stopRecognition();
+            } else {
+                startRecognition();
+            }
+        }
+
+        function startRecognition() {
+            var config = SpeechSDK.SpeechConfig.fromSubscription("BRZb5xLbQmI4UTOCxXu7WDecUrqC180GPiZMwLZYraVslUd48WC6JQQJ99BAACYeBjFXJ3w3AAAYACOGUV0J", "eastus");
+            config.speechRecognitionLanguage = "ar-SA";
+
+            var audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+            recognizer = new SpeechSDK.SpeechRecognizer(config, audioConfig);
+
+            var liveText = document.getElementById("live-text");
+            var recordButton = document.getElementById("recordButton");
+
+            recognizer.recognizing = (s, e) => {
+                liveText.textContent = e.result.text;
+            };
+
+            recognizer.recognized = (s, e) => {
+                if (e.result.reason == SpeechSDK.ResultReason.RecognizedSpeech) {
+                    fullText += (fullText ? " " : "") + e.result.text;
+                    liveText.textContent = fullText;
+                }
+            };
+
+            recognizer.startContinuousRecognitionAsync();
+            isRecognizing = true;
+            recordButton.textContent = "إيقاف التسجيل";
+            recordButton.style.backgroundColor = "#ff4d4d";
+        }
+
+        function stopRecognition() {
+            if (recognizer) {
+                recognizer.stopContinuousRecognitionAsync();
+                var recordButton = document.getElementById("recordButton");
+                recordButton.textContent = "بدء التسجيل";
+                recordButton.style.backgroundColor = "#4C2A21";
+                isRecognizing = false;
+                document.getElementById("processButton").disabled = false;
+            }
+        }
+
+        function processText() {
+            var dateMatch = fullText.match(/\b(\d{1,4})\s*(هجري|ميلادي|هـ|م)?\b|\b(عام)\s*(\d{1,4})\b|\b(\d{1,2})[-/](\d{1,2})[-/](\d{4})\b/);
+            if (dateMatch) {
+                if (dateMatch[1]) {
+                    document.getElementById("date").value = dateMatch[1] + (dateMatch[2] ? " " + dateMatch[2] : "");
+                } else if (dateMatch[3] && dateMatch[4]) {
+                    document.getElementById("date").value = dateMatch[3] + " " + dateMatch[4];
+                } else if (dateMatch[5] && dateMatch[6] && dateMatch[7]) {
+                    document.getElementById("date").value = dateMatch[5] + "/" + dateMatch[6] + "/" + dateMatch[7];
+                }
+            }
+            
+            var locationMatch = fullText.match(/في\s+([^\.]+)/);
+            document.getElementById("location").value = locationMatch ? locationMatch[1].trim() : '';
+            
+            document.getElementById("story").value = fullText;
+            
+            var referencesMatch = fullText.match(/المرجع:? (.+)/i);
+            document.getElementById("references").value = referencesMatch ? referencesMatch[1].trim() : '';
+
+            var words = fullText.split(/\s+/);
+            var titleWords = words.slice(0, 5).join(" ");
+            document.getElementById("title").value = titleWords + "...";
+
+            document.getElementById("saveButton").disabled = false;
+        }
+
+        async function saveToFile() {
+            const form = document.getElementById('eventForm');
+            const formData = new FormData(form);
+            let content = '';
+            for (let [key, value] of formData.entries()) {
+                content += `${key}: ${value}\n`;
+            }
+
+            try {
+                const handle = await window.showDirectoryPicker();
+                const newFileHandle = await handle.getFileHandle('event_data.txt', { create: true });
+                const writable = await newFileHandle.createWritable();
+                await writable.write(content);
+                await writable.close();
+                alert('تم حفظ البيانات بنجاح!');
+            } catch (error) {
+                console.error('Error saving file:', error);
+                alert('حدث خطأ أثناء حفظ الملف. يرجى المحاولة مرة أخرى.');
+            }
+        }
+
+        async function uploadAudio() {
+            try {
+                const [fileHandle] = await window.showOpenFilePicker({
+                    types: [
+                        {
+                            description: 'Audio Files',
+                            accept: {
+                                'audio/*': ['.mp3', '.wav', '.ogg']
+                            }
+                        },
+                    ],
+                    multiple: false
+                });
+                const file = await fileHandle.getFile();
+                
+                // Here you would process the audio file
+                // For now, we'll just display a success message
+                alert('تم رفع الملف الصوتي بنجاح: ' + file.name);
+                
+                // Enable the process button
+                document.getElementById("processButton").disabled = false;
+            } catch (error) {
+                console.error('Error uploading audio file:', error);
+                alert('حدث خطأ أثناء رفع الملف الصوتي. يرجى المحاولة مرة أخرى.');
+            }
+        }
+    </script>
+</body>
+</html>

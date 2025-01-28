@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - أداة مقارنة النصوص</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        .data-section {
+            margin-bottom: 20px;
+        }
+
+        .data-section h2 {
+            color: #444;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        .data-content {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+
+        #backToIndex {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        #backToIndex:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>لوحة التحكم - أداة مقارنة النصوص</h1>
+
+        <div class="data-section">
+            <h2>عنوان الحدث:</h2>
+            <div id="eventTitle" class="data-content"></div>
+        </div>
+
+        <div class="data-section">
+            <h2>التاريخ:</h2>
+            <div id="eventDate" class="data-content"></div>
+        </div>
+
+        <div class="data-section">
+            <h2>الموقع:</h2>
+            <div id="eventLocation" class="data-content"></div>
+        </div>
+
+        <div class="data-section">
+            <h2>القصة:</h2>
+            <div id="eventStory" class="data-content"></div>
+        </div>
+
+        <div class="data-section">
+            <h2>المراجع:</h2>
+            <div id="eventReferences" class="data-content"></div>
+        </div>
+
+        <a href="index.html" id="backToIndex">العودة إلى الصفحة الرئيسية</a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Retrieve data from localStorage
+            let jsonData = localStorage.getItem('eventData');
+            if (jsonData) {
+                let data = JSON.parse(jsonData);
+
+                // Display data in the dashboard
+                document.getElementById('eventTitle').textContent = data.eventTitle || 'غير متوفر';
+                document.getElementById('eventDate').textContent = data.eventDate || 'غير متوفر';
+                document.getElementById('eventLocation').textContent = data.eventLocation || 'غير متوفر';
+                document.getElementById('eventStory').textContent = data.eventStory || 'غير متوفر';
+                document.getElementById('eventReferences').textContent = data.eventReferences || 'غير متوفر';
+
+                // Clear the data from localStorage after displaying it
+                localStorage.removeItem('eventData');
+            } else {
+                // If no data is available, display a message
+                const sections = document.querySelectorAll('.data-content');
+                sections.forEach(section => {
+                    section.textContent = 'لا توجد بيانات متاحة';
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
